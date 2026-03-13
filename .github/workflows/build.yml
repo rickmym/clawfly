@@ -1,0 +1,92 @@
+name: Build Clawfly
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux
+          - os: windows-latest
+            name: win
+          - os: macos-latest
+            name: mac
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        run: pnpm run build
+
+      - name: Build Electron app (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm run build:electron
+        env:
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+
+      - name: Build Electron app (Windows)
+        if: matrix.os == 'windows-latest'
+        run: pnpm run build:electron
+        env:
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+
+      - name: Build Electron app (macOS)
+        if: matrix.os == 'macos-latest'
+        run: pnpm run build:electron
+        env:
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+
+      - name: Upload Linux artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clawfly-Linux
+          path: |
+            release/**/*.AppImage
+            release/**/*.deb
+            release/linux-unpacked/**
+          retention-days: 5
+
+      - name: Upload Windows artifacts
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clawfly-Windows
+          path: |
+            release/**/*.exe
+            release/win-unpacked/**
+          retention-days: 5
+
+      - name: Upload macOS artifacts
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Clawfly-macOS
+          path: |
+            release/**/*.dmg
+            release/mac/**
+          retention-days: 5
