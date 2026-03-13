@@ -102,10 +102,6 @@
       "dist/**/*",
       "electron/**/*"
     ],
-    "electronMirrors": [
-      "https://npmmirror.com/mirrors/electron/",
-      "https://cdn.npmmirror.com/binaries/electron/"
-    ],
     "win": {
       "target": [
         {
